@@ -5,6 +5,7 @@
 
 // src/services/students.js
 import { StudentsCollection } from '../db/models/student.js';
+import { updateStudent } from '../services/students.js';
 
 export const getAllStudents = async () => {
   const students = await StudentsCollection.find();
@@ -38,4 +39,44 @@ export const deleteStudent = async (studentId) => {
   });
 
   return student;
+};
+
+export const updateStudent = async (studentId, payload, options = {}) => {
+  const rawResult = await StudentsCollection.findOneAndUpdate(
+    { _id: studentId },
+    payload,
+    {
+      new: true,
+      includeResultMetadata: true,
+      ...options,
+    },
+  );
+
+  if (!rawResult || !rawResult.value) return null;
+
+  return {
+    student: rawResult.value,
+    isNew: Boolean(rawResult?.lastErrorObject?.upserted),
+  };
+};
+
+export const upsertStudentController = async (req, res, next) => {
+  const { studentId } = req.params;
+
+  const result = await updateStudent(studentId, req.body, {
+    upsert: true,
+  });
+
+  if (!result) {
+    next(createHttpError(404, 'Student not found'));
+    return;
+  }
+
+  const status = result.isNew ? 201 : 200;
+
+  res.status(status).json({
+    status,
+    message: `Successfully upserted a student!`,
+    data: result.student,
+  });
 };
