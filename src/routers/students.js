@@ -1,12 +1,13 @@
 // src/routers/students.js
-
 import { Router } from 'express';
 
 import {
   getStudentsController,
   getStudentByIdController,
-} from '../controllers/students';
-import { ctrlWrapper } from '../utils/ctrlWrapper';
+  createStudentController,
+  deleteStudentController,
+} from '../controllers/students.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 
 const router = Router();
 
@@ -14,5 +15,8 @@ router.get('/students', ctrlWrapper(getStudentsController));
 
 router.get('/students/:studentId', ctrlWrapper(getStudentByIdController));
 
+router.post('/students', ctrlWrapper(createStudentController));
+
+router.delete('/students/:studentId', ctrlWrapper(deleteStudentController));
+
 export default router;
-// Завдяки цьому блок try...catch в самому контролері додавати немає потреби, що прибирає зайве дублювання шаблонного коду.
