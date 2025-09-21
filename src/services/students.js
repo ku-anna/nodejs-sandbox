@@ -1,44 +1,21 @@
-// Створимо сервіс студентів у файлі src/services/students.js, в якому додамо функції:
-
-// для отримання інформації про всіх студентів
-// для отримання інформації про одного студента за _id.
-
 // src/services/students.js
 import { StudentsCollection } from '../db/models/student.js';
-import { updateStudent } from '../services/students.js';
+import createHttpError from 'http-errors';
 
 export const getAllStudents = async () => {
-  const students = await StudentsCollection.find();
-  return students;
+  return await StudentsCollection.find();
 };
-// Метод find() моделі StudentsCollection — це вбудований метод Mongoose для пошуку документів у MongoDB. Викликаючи find() на моделі StudentsCollection, ми отримаємо масив документів, що відповідають моделі Student. У випадку, якщо колекція студентів порожня, метод повертає порожній масив
 
 export const getStudentById = async (studentId) => {
-  const student = await StudentsCollection.findById(studentId);
-  return student;
+  return await StudentsCollection.findById(studentId);
 };
-// Метод findById() моделі StudentsCollection — це вбудований метод Mongoose для пошуку одного документа у MongoDB за його унікальним ідентифікатором. Викликаючи findById() на моделі StudentsCollection із вказаним ідентифікатором студента, ми отримаємо документ, що відповідає цьому ідентифікатору, як об'єкт Student. Якщо документ із заданим ідентифікатором не буде знайдено, метод поверне null
 
 export const createStudent = async (payload) => {
-  const student = await StudentsCollection.create(payload);
-  return student;
+  return await StudentsCollection.create(payload);
 };
-// У параметрі payload будемо очікувати об’єкт даних студента з наступними властивостями:
-// {
-//   "name": "John Doe",
-//   "email": "jojndoe@mail.com",
-//   "age": 10,
-//   "gender": "male",
-//   "avgMark": 10.3,
-//   "onDuty": true
-// }
 
 export const deleteStudent = async (studentId) => {
-  const student = await StudentsCollection.findOneAndDelete({
-    _id: studentId,
-  });
-
-  return student;
+  return await StudentsCollection.findOneAndDelete({ _id: studentId });
 };
 
 export const updateStudent = async (studentId, payload, options = {}) => {
@@ -47,36 +24,33 @@ export const updateStudent = async (studentId, payload, options = {}) => {
     payload,
     {
       new: true,
-      includeResultMetadata: true,
+      upsert: options.upsert || false,
       ...options,
     },
   );
 
-  if (!rawResult || !rawResult.value) return null;
+  if (!rawResult) return null;
 
   return {
-    student: rawResult.value,
-    isNew: Boolean(rawResult?.lastErrorObject?.upserted),
+    student: rawResult,
+    isNew: options.upsert && rawResult.createdAt === rawResult.updatedAt,
   };
 };
 
 export const upsertStudentController = async (req, res, next) => {
   const { studentId } = req.params;
 
-  const result = await updateStudent(studentId, req.body, {
-    upsert: true,
-  });
+  const result = await updateStudent(studentId, req.body, { upsert: true });
 
   if (!result) {
-    next(createHttpError(404, 'Student not found'));
-    return;
+    return next(createHttpError(404, 'Student not found'));
   }
 
   const status = result.isNew ? 201 : 200;
 
   res.status(status).json({
     status,
-    message: `Successfully upserted a student!`,
+    message: 'Successfully upserted a student!',
     data: result.student,
   });
 };
