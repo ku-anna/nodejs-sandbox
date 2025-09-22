@@ -41,7 +41,7 @@ export const startServer = () => {
 
   app.use(studentsRouter);
 
-  app.use('*', notFoundHandler);
+  app.use(notFoundHandler);
 
   app.use(errorHandler);
 

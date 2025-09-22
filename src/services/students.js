@@ -1,10 +1,7 @@
 // src/services/students.js
 import { StudentsCollection } from '../db/models/student.js';
 import createHttpError from 'http-errors';
-
-export const getAllStudents = async () => {
-  return await StudentsCollection.find();
-};
+import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 
 export const getStudentById = async (studentId) => {
   return await StudentsCollection.findById(studentId);
@@ -54,3 +51,27 @@ export const upsertStudentController = async (req, res, next) => {
     data: result.student,
   });
 };
+
+export const getAllStudents = async ({ page, perPage }) => {
+  const limit = perPage;
+  const skip = (page - 1) * perPage;
+
+  const studentsQuery = StudentsCollection.find();
+  const studentsCount = await StudentsCollection.find()
+    .merge(studentsQuery)
+    .countDocuments();
+
+  const students = await studentsQuery.skip(skip).limit(limit).exec();
+
+  const paginationData = calculatePaginationData(studentsCount, perPage, page);
+
+  return {
+    data: students,
+    ...paginationData,
+  };
+};
+// Тепер сервісна функція getAllStudents приймає об'єкт з параметрами page та perPage, що вказують номер сторінки та кількість записів на сторінці відповідно.
+// Функція getAllStudents спочатку розраховує зміщення (skip), що дорівнює кількості записів, що мають бути пропущені перед початком видачі на поточній сторінці. Вона також розраховує ліміт записів, які мають бути повернуті на одній сторінці.
+// Далі, функція ініціює запит до бази даних для отримання списку студентів, використовуючи спеціальні методи skip та limit для застосування пагінації. Паралельно, вона робить запит для визначення загальної кількості студентів за допомогою методу countDocuments.
+// Після отримання списку студентів і загальної кількості, функція викликає calculatePaginationData, яка обраховує і повертає дані для пагінації, зокрема інформацію про загальну кількість сторінок і чи є наступна чи попередня сторінка.
+// Результатом виконання функції є об'єкт, що містить масив з даними про студентів і додаткову інформацію про пагінацію, що дозволяє клієнту легко навігувати між сторінками результатів.
