@@ -8,23 +8,28 @@ import {
 } from '../services/students.js';
 import createHttpError from 'http-errors';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
+import { parseSortParams } from '../utils/parseSortParams.js';
+import { parseFilterParams } from '../utils/parseFilterParams.js';
 
-// GET /students (with pagination)
-export const getStudentsController = async (req, res, next) => {
-  try {
-    const { page, perPage } = parsePaginationParams(req.query);
-    const students = await getAllStudents({ page, perPage });
+// // GET /students (with pagination)
+// export const getStudentsController = async (req, res) => {
+//   const { page, perPage } = parsePaginationParams(req.query);
 
-    res.json({
-      status: 200,
-      message: 'Successfully found students!',
-      data: students,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
+//   const { sortBy, sortOrder } = parseSortParams(req.query);
 
+//   const students = await getAllStudents({
+//     page,
+//     perPage,
+//     sortBy,
+//     sortOrder,
+//   });
+
+//   res.json({
+//     status: 200,
+//     message: 'Successfully found students!',
+//     data: students,
+//   });
+// };
 // GET /students/:studentId
 export const getStudentByIdController = async (req, res, next) => {
   try {
@@ -120,4 +125,24 @@ export const upsertStudentController = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+export const getStudentsController = async (req, res) => {
+  const { page, perPage } = parsePaginationParams(req.query);
+  const { sortBy, sortOrder } = parseSortParams(req.query);
+  const filter = parseFilterParams(req.query);
+
+  const students = await getAllStudents({
+    page,
+    perPage,
+    sortBy,
+    sortOrder,
+    filter,
+  });
+
+  res.json({
+    status: 200,
+    message: 'Successfully found students!',
+    data: students,
+  });
 };
