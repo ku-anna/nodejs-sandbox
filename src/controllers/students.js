@@ -10,6 +10,9 @@ import createHttpError from 'http-errors';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import { saveFileToUploadDir } from '../utils/saveFileToUploadDir.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
 
 // // GET /students (with pagination)
 // export const getStudentsController = async (req, res) => {
@@ -81,26 +84,6 @@ export const deleteStudentController = async (req, res, next) => {
   }
 };
 
-// PATCH /students/:studentId
-export const patchStudentController = async (req, res, next) => {
-  try {
-    const { studentId } = req.params;
-    const result = await updateStudent(studentId, req.body);
-
-    if (!result) {
-      return next(createHttpError(404, 'Student not found'));
-    }
-
-    res.json({
-      status: 200,
-      message: `Successfully patched a student!`,
-      data: result.student,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
 // PUT /students/:studentId (upsert)
 export const upsertStudentController = async (req, res, next) => {
   try {
@@ -144,5 +127,37 @@ export const getStudentsController = async (req, res) => {
     status: 200,
     message: 'Successfully found students!',
     data: students,
+  });
+};
+
+// PATCH /students/:studentId
+export const patchStudentController = async (req, res, next) => {
+  const { studentId } = req.params;
+  const photo = req.file;
+
+  let photoUrl;
+
+  if (photo) {
+    if (getEnvVar('ENABLE_CLOUDINARY') === 'true') {
+      photoUrl = await saveFileToCloudinary(photo);
+    } else {
+      photoUrl = await saveFileToUploadDir(photo);
+    }
+  }
+
+  const result = await updateStudent(studentId, {
+    ...req.body,
+    photo: photoUrl,
+  });
+
+  if (!result) {
+    next(createHttpError(404, 'Student not found'));
+    return;
+  }
+
+  res.json({
+    status: 200,
+    message: `Successfully patched a student!`,
+    data: result.student,
   });
 };

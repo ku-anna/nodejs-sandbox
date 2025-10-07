@@ -36,6 +36,13 @@ const studentsSchema = new Schema(
     timestamps: true,
     versionKey: false,
   },
+  {
+    photo: { type: String },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
 );
 
 export const StudentsCollection = model('students', studentsSchema);
