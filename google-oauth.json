@@ -1,0 +1,11 @@
+{
+  "web": {
+    "client_id": "1303406335-jennr1k8pv19mat84ik2niul0hhv5l0f.apps.googleusercontent.com",
+    "project_id": "subtle-fulcrum-475010-g6",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_secret": "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",
+    "redirect_uris": ["http://localhost:3000/confirm-google-auth/"]
+  }
+}
