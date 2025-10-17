@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 
 import { getEnvVar } from './utils/getEnvVar.js';
 import router from './routers/index.js';
-// Імпортуємо middleware
+
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { UPLOAD_DIR } from './constants/index.js';
@@ -26,7 +26,6 @@ export const startServer = () => {
     }),
   );
 
-  // CORS і cookies
   app.use(cors());
   app.use(cookieParser());
 
@@ -48,11 +47,13 @@ export const startServer = () => {
 
   // Підключення основного роутера
   app.use(router);
+  app.use('/api-docs', express.static('docs'));
 
   // Middleware для 404
   app.use(notFoundHandler);
 
   // Middleware для обробки помилок
+
   app.use(errorHandler);
 
   // Запуск сервера
